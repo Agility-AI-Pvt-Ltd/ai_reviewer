@@ -5,6 +5,8 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 concurrency:
   group: ec2-deploy-${{ github.ref }}
@@ -78,7 +80,7 @@ jobs:
       - name: Upload source to EC2
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/ec2_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "mkdir -p '${EC2_APP_DIR}'"
+          ssh -i ~/.ssh/ec2_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "sudo mkdir -p '${EC2_APP_DIR}' && sudo chown -R ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} '${EC2_APP_DIR}'"
           scp -i ~/.ssh/ec2_key /tmp/futurex-reviewer.tar.gz "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/futurex-reviewer.tar.gz"
 
       - name: Upload EC2 env file from secret when provided
