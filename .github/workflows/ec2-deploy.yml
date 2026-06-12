@@ -116,7 +116,7 @@ jobs:
           docker compose -f docker-compose.ec2.yml ps
 
           sleep 5
-          if ! curl -fsS "http://localhost:${APP_PORT:-8000}/health"; then
+          if ! curl -fsS "http://localhost:${APP_PORT:-8010}/health"; then
             echo "::error::Health check failed. Showing app logs."
             docker compose -f docker-compose.ec2.yml logs --tail=200 app
             exit 1
