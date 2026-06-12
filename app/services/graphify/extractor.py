@@ -36,16 +36,130 @@ def _node_type(node: dict[str, Any]) -> str:
     return str(node.get("type") or node.get("kind") or "").lower()
 
 
+# def extract_graph_summary(graph: dict[str, Any]) -> dict[str, Any]:
+#     nodes = graph.get("nodes", [])
+#     edges = graph.get("edges", [])
+
+#     functions = sorted(
+#         {name for node in nodes if _node_type(node) == "function" and (name := _node_name(node))}
+#     )
+#     classes = sorted({name for node in nodes if _node_type(node) == "class" and (name := _node_name(node))})
+#     files = sorted({str(node.get("file") or node.get("path")) for node in nodes if node.get("file") or node.get("path")})
+
+#     def edge_text(edge: dict[str, Any]) -> str:
+#         return f"{edge.get('source')} -> {edge.get('target')}"
+
+#     call_edges = [
+#         edge_text(edge)
+#         for edge in edges
+#         if str(edge.get("type") or edge.get("relation") or "").lower() in {"calls", "call"}
+#     ][:50]
+#     import_edges = [
+#         edge_text(edge)
+#         for edge in edges
+#         if str(edge.get("type") or edge.get("relation") or "").lower() in {"imports", "import", "depends_on"}
+#     ][:30]
+
+#     communities = [
+#         {
+#             "name": community.get("label") or community.get("name") or f"Cluster {index}",
+#             "members": list(community.get("members", []))[:10],
+#         }
+#         for index, community in enumerate(graph.get("communities", []))
+#         if isinstance(community, dict)
+#     ]
+
+#     return {
+#         "functions": functions[:200],
+#         "classes": classes[:200],
+#         "files": files[:300],
+#         "call_edges": call_edges,
+#         "import_edges": import_edges,
+#         "communities": communities[:30],
+#     }
+
+
 def extract_graph_summary(graph: dict[str, Any]) -> dict[str, Any]:
     nodes = graph.get("nodes", [])
     edges = graph.get("edges", [])
+    hyperedges = graph.get("graph", {}).get("hyperedges", [])
 
-    functions = sorted(
-        {name for node in nodes if _node_type(node) == "function" and (name := _node_name(node))}
-    )
-    classes = sorted({name for node in nodes if _node_type(node) == "class" and (name := _node_name(node))})
-    files = sorted({str(node.get("file") or node.get("path")) for node in nodes if node.get("file") or node.get("path")})
+    functions: set[str] = set()
+    classes: set[str] = set()
+    files: set[str] = set()
 
+    for node in nodes:
+        # OLD FORMAT
+        node_type = str(node.get("type") or node.get("kind") or "").lower()
+        node_name = node.get("name") or node.get("id") or node.get("label")
+
+        if node_type == "function" and node_name:
+            functions.add(str(node_name))
+
+        elif node_type == "class" and node_name:
+            classes.add(str(node_name))
+
+        if node.get("file"):
+            files.add(str(node["file"]))
+        
+        if node.get("path"):
+            files.add(str(node["path"]))
+
+        # NEW FORMAT
+        label = str(node.get("label", "")).strip()
+
+        if label.endswith("()"):
+            functions.add(label[:-2])  # remove ()
+
+        elif (
+            label
+            and not label.endswith(".py")
+            and node.get("file_type") == "code"
+        ):
+            classes.add(label)
+
+        if node.get("source_file"):
+            files.add(str(node["source_file"]))
+
+    functions_list = sorted(functions)
+    classes_list = sorted(classes)
+    files_list = sorted(files)
+
+    # COMMUNITIES
+    communities_raw = graph.get("communities", [])
+    if communities_raw:
+        # OLD FORMAT
+        communities = [
+            {
+                "name": community.get("label") or community.get("name") or f"Cluster {index}",
+                "members": list(community.get("members", []))[:10],
+            }
+            for index, community in enumerate(communities_raw)
+            if isinstance(community, dict)
+        ]
+    else:
+        # NEW FORMAT
+        communities = []
+        community_map: dict[int, list[str]] = {}
+
+        for node in nodes:
+            community = node.get("community")
+            if community is None:
+                continue
+            label = node.get("label") or node.get("name")
+            if not label:
+                continue
+            community_map.setdefault(int(community), []).append(str(label))
+
+        for community_id, members in sorted(community_map.items()):
+            communities.append(
+                {
+                    "name": f"Cluster {community_id}",
+                    "members": members[:10],
+                }
+            )
+
+    # EDGES
     def edge_text(edge: dict[str, Any]) -> str:
         return f"{edge.get('source')} -> {edge.get('target')}"
 
@@ -53,27 +167,27 @@ def extract_graph_summary(graph: dict[str, Any]) -> dict[str, Any]:
         edge_text(edge)
         for edge in edges
         if str(edge.get("type") or edge.get("relation") or "").lower() in {"calls", "call"}
-    ][:50]
+    ]
+
     import_edges = [
         edge_text(edge)
         for edge in edges
         if str(edge.get("type") or edge.get("relation") or "").lower() in {"imports", "import", "depends_on"}
-    ][:30]
-
-    communities = [
-        {
-            "name": community.get("label") or community.get("name") or f"Cluster {index}",
-            "members": list(community.get("members", []))[:10],
-        }
-        for index, community in enumerate(graph.get("communities", []))
-        if isinstance(community, dict)
     ]
 
+    for edge in hyperedges:
+        relation = str(edge.get("relation", "")).lower()
+        if relation != "participate_in":
+            continue
+        label = edge.get("label", edge.get("id"))
+        nodes_in_edge = edge.get("nodes", [])
+        import_edges.append(f"{label}: {', '.join(nodes_in_edge)}")
+
     return {
-        "functions": functions[:200],
-        "classes": classes[:200],
-        "files": files[:300],
-        "call_edges": call_edges,
-        "import_edges": import_edges,
+        "functions": functions_list[:200],
+        "classes": classes_list[:200],
+        "files": files_list[:300],
+        "call_edges": call_edges[:50],
+        "import_edges": import_edges[:50],
         "communities": communities[:30],
     }
