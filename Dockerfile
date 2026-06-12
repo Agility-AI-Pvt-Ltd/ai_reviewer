@@ -18,6 +18,8 @@ RUN uv sync --frozen --no-dev
 
 COPY app ./app
 COPY prompts ./prompts
+COPY alembic ./alembic
+COPY alembic.ini ./
 
 EXPOSE 8010
 
