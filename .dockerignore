@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.git
+.github
+.pytest_cache
+.venv
+__pycache__
+*.pyc
+graphify-out
+projects
+tests

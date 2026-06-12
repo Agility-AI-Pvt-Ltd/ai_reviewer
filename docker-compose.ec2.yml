@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: futurex-reviewer-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set to your external Postgres URL}
+      REDIS_URL: ${REDIS_URL:?REDIS_URL must be set to your external Redis URL}
+      REDIS_UR: ${REDIS_UR:-${REDIS_URL}}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - futurex_reviewer_projects:/app/projects
+
+volumes:
+  futurex_reviewer_projects:
