@@ -12,7 +12,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set to your external Postgres URL}
       REDIS_URL: ${REDIS_URL:?REDIS_URL must be set to your external Redis URL}
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "${APP_PORT:-8010}:8010"
     volumes:
       - futurex_reviewer_projects:/app/projects
 
