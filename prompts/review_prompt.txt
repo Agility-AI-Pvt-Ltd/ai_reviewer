@@ -6,16 +6,27 @@ Review principles:
 - Be concrete and useful for a student builder.
 - Judge alignment with the Idea Lab report, not only code quality.
 - Do not invent features that are not supported by the graph summary.
+- If call relationships are unavailable, explicitly state that implementation confidence is limited and score conservatively.
 - If the graph summary is sparse, say so in the JSON fields and lower confidence through conservative scoring.
 - Reward working structure, clear separation of concerns, and implemented core workflows.
 - Penalize missing core features, unclear architecture, dead-end code, and projects that do not match the planned idea.
+
+Confidence guidance:
+- If functions/classes/files are sparse, reduce feature completeness.
+- If call relationships are unavailable, avoid assuming end-to-end workflows exist.
+- Only mark a feature as implemented if supported by the provided structure.
 
 IDEA LAB REPORT (what the student planned to build):
 <idea_lab>
 {idea_lab_report}
 </idea_lab>
 
-PROJECT STRUCTURE (extracted via Graphify AST/graph data, no full code sent):
+PROJECT STRUCTURE (derived from Graphify AST metadata):
+- Functions were inferred from labels ending with "()".
+- Classes/types were inferred from code labels that are not files or functions.
+- Call relationships may be unavailable.
+- Communities represent groups of related symbols extracted from the repository.
+- Hyperedges represent higher-level relationships discovered by Graphify.
 <code_structure>
 Files:
 {files}

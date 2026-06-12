@@ -36,44 +36,126 @@ def _node_type(node: dict[str, Any]) -> str:
     return str(node.get("type") or node.get("kind") or "").lower()
 
 
+# def extract_graph_summary(graph: dict[str, Any]) -> dict[str, Any]:
+#     nodes = graph.get("nodes", [])
+#     edges = graph.get("edges", [])
+
+#     functions = sorted(
+#         {name for node in nodes if _node_type(node) == "function" and (name := _node_name(node))}
+#     )
+#     classes = sorted({name for node in nodes if _node_type(node) == "class" and (name := _node_name(node))})
+#     files = sorted({str(node.get("file") or node.get("path")) for node in nodes if node.get("file") or node.get("path")})
+
+#     def edge_text(edge: dict[str, Any]) -> str:
+#         return f"{edge.get('source')} -> {edge.get('target')}"
+
+#     call_edges = [
+#         edge_text(edge)
+#         for edge in edges
+#         if str(edge.get("type") or edge.get("relation") or "").lower() in {"calls", "call"}
+#     ][:50]
+#     import_edges = [
+#         edge_text(edge)
+#         for edge in edges
+#         if str(edge.get("type") or edge.get("relation") or "").lower() in {"imports", "import", "depends_on"}
+#     ][:30]
+
+#     communities = [
+#         {
+#             "name": community.get("label") or community.get("name") or f"Cluster {index}",
+#             "members": list(community.get("members", []))[:10],
+#         }
+#         for index, community in enumerate(graph.get("communities", []))
+#         if isinstance(community, dict)
+#     ]
+
+#     return {
+#         "functions": functions[:200],
+#         "classes": classes[:200],
+#         "files": files[:300],
+#         "call_edges": call_edges,
+#         "import_edges": import_edges,
+#         "communities": communities[:30],
+#     }
+
+
 def extract_graph_summary(graph: dict[str, Any]) -> dict[str, Any]:
     nodes = graph.get("nodes", [])
-    edges = graph.get("edges", [])
+    hyperedges = graph.get("graph", {}).get("hyperedges", [])
 
-    functions = sorted(
-        {name for node in nodes if _node_type(node) == "function" and (name := _node_name(node))}
-    )
-    classes = sorted({name for node in nodes if _node_type(node) == "class" and (name := _node_name(node))})
-    files = sorted({str(node.get("file") or node.get("path")) for node in nodes if node.get("file") or node.get("path")})
+    functions: list[str] = []
+    classes: list[str] = []
+    files: set[str] = set()
 
-    def edge_text(edge: dict[str, Any]) -> str:
-        return f"{edge.get('source')} -> {edge.get('target')}"
+    for node in nodes:
+        label = str(node.get("label", "")).strip()
+        file_type = str(node.get("file_type", "")).lower()
+        source_file = node.get("source_file")
 
-    call_edges = [
-        edge_text(edge)
-        for edge in edges
-        if str(edge.get("type") or edge.get("relation") or "").lower() in {"calls", "call"}
-    ][:50]
-    import_edges = [
-        edge_text(edge)
-        for edge in edges
-        if str(edge.get("type") or edge.get("relation") or "").lower() in {"imports", "import", "depends_on"}
-    ][:30]
+        if source_file:
+            files.add(source_file)
 
-    communities = [
-        {
-            "name": community.get("label") or community.get("name") or f"Cluster {index}",
-            "members": list(community.get("members", []))[:10],
-        }
-        for index, community in enumerate(graph.get("communities", []))
-        if isinstance(community, dict)
-    ]
+        if file_type != "code":
+            continue
+
+        if label.endswith("()"):
+            functions.append(label)
+
+        elif label.endswith(".py"):
+            continue
+
+        elif label:
+            classes.append(label)
+
+    functions = sorted(set(functions))
+    classes = sorted(set(classes))
+
+    communities = []
+
+    community_map: dict[int, list[str]] = {}
+
+    for node in nodes:
+        community = node.get("community")
+
+        if community is None:
+            continue
+
+        label = node.get("label")
+
+        if not label:
+            continue
+
+        community_map.setdefault(int(community), []).append(label)
+
+    for community_id, members in sorted(community_map.items()):
+        communities.append(
+            {
+                "name": f"Cluster {community_id}",
+                "members": members[:10],
+            }
+        )
+
+    import_edges = []
+
+    for edge in hyperedges:
+        relation = str(edge.get("relation", "")).lower()
+
+        if relation != "participate_in":
+            continue
+
+        label = edge.get("label", edge.get("id"))
+
+        nodes_in_edge = edge.get("nodes", [])
+
+        import_edges.append(
+            f"{label}: {', '.join(nodes_in_edge)}"
+        )
 
     return {
         "functions": functions[:200],
         "classes": classes[:200],
-        "files": files[:300],
-        "call_edges": call_edges,
-        "import_edges": import_edges,
+        "files": sorted(files)[:300],
+        "call_edges": [],   # Graphify output does not contain calls
+        "import_edges": import_edges[:50],
         "communities": communities[:30],
     }

@@ -95,17 +95,57 @@ def _json_from_text(text: str) -> dict[str, Any]:
         clean = re.sub(r"\s*```$", "", clean)
     return json.loads(clean)
 
+def _format_list(values: list[str], empty: str) -> str:
+    if not values:
+        return empty
 
-def build_review_prompt(idea_lab_report: IdeaLabReport, graph_summary: dict[str, Any]) -> str:
+    return "\n".join(f"- {v}" for v in values)
+def build_review_prompt(
+    idea_lab_report: IdeaLabReport,
+    graph_summary: dict[str, Any],
+) -> str:
     return load_review_prompt().format(
-        idea_lab_report=json.dumps(idea_lab_report.model_dump(), indent=2, default=str),
-        files="\n".join(graph_summary.get("files", [])),
-        functions="\n".join(graph_summary.get("functions", [])),
-        classes="\n".join(graph_summary.get("classes", [])),
-        call_edges="\n".join(graph_summary.get("call_edges", [])),
-        import_edges="\n".join(graph_summary.get("import_edges", [])),
-        communities=json.dumps(graph_summary.get("communities", []), indent=2),
+        idea_lab_report=json.dumps(
+            idea_lab_report.model_dump(),
+            indent=2,
+            default=str,
+        ),
+        files=_format_list(
+            graph_summary.get("files", []),
+            "Unavailable",
+        ),
+        functions=_format_list(
+            graph_summary.get("functions", []),
+            "Unavailable",
+        ),
+        classes=_format_list(
+            graph_summary.get("classes", []),
+            "Unavailable",
+        ),
+        call_edges=_format_list(
+            graph_summary.get("call_edges", []),
+            "Unavailable",
+        ),
+        import_edges=_format_list(
+            graph_summary.get("import_edges", []),
+            "Unavailable",
+        ),
+        communities=json.dumps(
+            graph_summary.get("communities", []),
+            indent=2,
+        ),
     )
+
+# def build_review_prompt(idea_lab_report: IdeaLabReport, graph_summary: dict[str, Any]) -> str:
+#     return load_review_prompt().format(
+#         idea_lab_report=json.dumps(idea_lab_report.model_dump(), indent=2, default=str),
+#         files="\n".join(graph_summary.get("files", [])),
+#         functions="\n".join(graph_summary.get("functions", [])),
+#         classes="\n".join(graph_summary.get("classes", [])),
+#         call_edges="\n".join(graph_summary.get("call_edges", [])),
+#         import_edges="\n".join(graph_summary.get("import_edges", [])),
+#         communities=json.dumps(graph_summary.get("communities", []), indent=2),
+#     )
 
 
 async def evaluate_project(
@@ -129,6 +169,7 @@ async def evaluate_project(
             },
         ],
         response_format={"type": "json_object"},
+        temperature=0.2,
     )
 
     text = response.choices[0].message.content or ""
