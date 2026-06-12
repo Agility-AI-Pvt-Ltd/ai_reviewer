@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _async_database_url(value: str) -> str:
+    value = value.replace("?sslmode=", "?ssl=").replace("&sslmode=", "&ssl=")
     if value.startswith("postgresql://"):
         return value.replace("postgresql://", "postgresql+asyncpg://", 1)
     if value.startswith("postgres://"):
