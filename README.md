@@ -76,10 +76,10 @@ EC2_SSH_KEY
 Optional secret:
 
 ```text
-EC2_ENV_FILE
+ENV_FILE
 ```
 
-Use `EC2_ENV_FILE` to upload the production `.env` during deploy. If this secret is not set, the workflow expects `.env` to already exist in the app directory on EC2.
+Use `ENV_FILE` to upload the production `.env` during deploy. If this secret is not set, the workflow expects `.env` to already exist in the app directory on EC2.
 
 Optional GitHub variable:
 
