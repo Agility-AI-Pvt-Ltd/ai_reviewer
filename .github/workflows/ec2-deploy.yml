@@ -83,11 +83,11 @@ jobs:
 
       - name: Upload EC2 env file from secret when provided
         env:
-          EC2_ENV_FILE: ${{ secrets.EC2_ENV_FILE }}
+          ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
           set -euo pipefail
-          if [ -n "${EC2_ENV_FILE}" ]; then
-            printf '%s\n' "${EC2_ENV_FILE}" > /tmp/futurex-reviewer.env
+          if [ -n "${ENV_FILE}" ]; then
+            printf '%s\n' "${ENV_FILE}" > /tmp/futurex-reviewer.env
             scp -i ~/.ssh/ec2_key /tmp/futurex-reviewer.env "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/futurex-reviewer.env"
           fi
 
@@ -105,7 +105,7 @@ jobs:
           fi
 
           if [ ! -f "$APP_DIR/.env" ]; then
-            echo "::error::Missing $APP_DIR/.env. Create it on EC2 or add GitHub secret EC2_ENV_FILE."
+            echo "::error::Missing $APP_DIR/.env. Create it on EC2 or add GitHub secret ENV_FILE."
             exit 1
           fi
 
