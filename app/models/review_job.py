@@ -6,7 +6,21 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 
-ReviewJobEventType = Literal["queued", "started", "completed", "failed"]
+ReviewJobEventType = Literal[
+    "queued",
+    "started",
+    "idea_lab_loading",
+    "idea_lab_loaded",
+    "review_prepared",
+    "graph_extract_started",
+    "graph_extract_completed",
+    "graph_summary_ready",
+    "evaluation_started",
+    "evaluation_completed",
+    "report_persisted",
+    "completed",
+    "failed",
+]
 
 
 class ReviewJobEvent(Base):
