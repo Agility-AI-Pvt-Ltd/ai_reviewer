@@ -1,7 +1,12 @@
 import asyncio
+import os
 
 import pytest
 from fastapi.testclient import TestClient
+
+os.environ["LANGSMITH_TRACING"] = "false"
+os.environ["LANGSMITH_TRACING_V2"] = "false"
+os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 from app.core import database
 from app.core.config import settings

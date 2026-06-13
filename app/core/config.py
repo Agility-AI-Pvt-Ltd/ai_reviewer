@@ -1,7 +1,10 @@
 import os
 from functools import lru_cache
+
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.core.observability import configure_langsmith
 
 
 def _async_database_url(value: str) -> str:
@@ -38,6 +41,14 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4.1-mini", validation_alias=AliasChoices("OPENAI_MODEL", "MODEL"))
+
+    langsmith_tracing: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("LANGSMITH_TRACING", "LANGSMITH_TRACING_V2", "LANGCHAIN_TRACING_V2"),
+    )
+    langsmith_endpoint: str | None = Field(default=None, alias="LANGSMITH_ENDPOINT")
+    langsmith_api_key: str | None = Field(default=None, alias="LANGSMITH_API_KEY")
+    langsmith_project: str = Field(default="ai_reviewer", alias="LANGSMITH_PROJECT")
 
     graphify_command: str = Field(default="graphify", alias="GRAPHIFY_COMMAND")
     projects_dir: str = Field(default="./projects", alias="PROJECTS_DIR")
@@ -97,3 +108,4 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+configure_langsmith(settings)
