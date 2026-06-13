@@ -6,6 +6,7 @@ from typing import Any
 from openai import AsyncOpenAI
 
 from app.core.config import settings
+from app.core.observability import add_trace_metadata, traceable, wrap_openai_client
 from app.schemas.idea_lab import IdeaLabReport
 from app.schemas.report import ProjectReviewReport
 
@@ -100,6 +101,49 @@ def _format_list(values: list[str], empty: str) -> str:
         return empty
 
     return "\n".join(f"- {v}" for v in values)
+
+
+def _graph_summary_counts(graph_summary: dict[str, Any]) -> dict[str, int]:
+    return {
+        "files": len(graph_summary.get("files", [])),
+        "functions": len(graph_summary.get("functions", [])),
+        "classes": len(graph_summary.get("classes", [])),
+        "call_edges": len(graph_summary.get("call_edges", [])),
+        "import_edges": len(graph_summary.get("import_edges", [])),
+        "communities": len(graph_summary.get("communities", [])),
+    }
+
+
+def _trace_prompt_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
+    idea_lab_report = inputs.get("idea_lab_report")
+    graph_summary = inputs.get("graph_summary", {})
+    return {
+        "conversation_id": getattr(idea_lab_report, "conversation_id", None),
+        "graph_summary_counts": _graph_summary_counts(graph_summary) if isinstance(graph_summary, dict) else {},
+    }
+
+
+def _trace_prompt_output(output: str) -> dict[str, Any]:
+    return {"prompt_chars": len(output)}
+
+
+def _trace_evaluation_output(output: ProjectReviewReport) -> dict[str, Any]:
+    return {
+        "overall_score": output.scores.overall,
+        "alignment_percentage": output.alignment.alignment_percentage,
+        "gap_count": len(output.gaps),
+        "improvement_count": len(output.improvements),
+        "summary": output.summary,
+    }
+
+
+@traceable(
+    name="review.build_prompt",
+    run_type="prompt",
+    tags=["review", "prompt"],
+    process_inputs=_trace_prompt_inputs,
+    process_outputs=_trace_prompt_output,
+)
 def build_review_prompt(
     idea_lab_report: IdeaLabReport,
     graph_summary: dict[str, Any],
@@ -148,6 +192,13 @@ def build_review_prompt(
 #     )
 
 
+@traceable(
+    name="review.evaluate_project",
+    run_type="chain",
+    tags=["review", "openai"],
+    process_inputs=_trace_prompt_inputs,
+    process_outputs=_trace_evaluation_output,
+)
 async def evaluate_project(
     idea_lab_report: IdeaLabReport,
     graph_summary: dict[str, Any],
@@ -155,7 +206,16 @@ async def evaluate_project(
     if not settings.openai_api_key:
         raise RuntimeError("OPENAI_API_KEY is required to evaluate project reviews")
 
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    client = wrap_openai_client(AsyncOpenAI(api_key=settings.openai_api_key))
+    prompt = build_review_prompt(idea_lab_report, graph_summary)
+    add_trace_metadata(
+        {
+            "conversation_id": idea_lab_report.conversation_id,
+            "openai_model": settings.openai_model,
+            "prompt_chars": len(prompt),
+            "graph_summary_counts": _graph_summary_counts(graph_summary),
+        }
+    )
     response = await client.chat.completions.create(
         model=settings.openai_model,
         messages=[
@@ -165,7 +225,7 @@ async def evaluate_project(
             },
             {
                 "role": "user",
-                "content": build_review_prompt(idea_lab_report, graph_summary),
+                "content": prompt,
             },
         ],
         response_format={"type": "json_object"},
@@ -173,4 +233,12 @@ async def evaluate_project(
     )
 
     text = response.choices[0].message.content or ""
-    return ProjectReviewReport.model_validate(_json_from_text(text))
+    report = ProjectReviewReport.model_validate(_json_from_text(text))
+    add_trace_metadata(
+        {
+            "openai_response_chars": len(text),
+            "overall_score": report.scores.overall,
+            "alignment_percentage": report.alignment.alignment_percentage,
+        }
+    )
+    return report
