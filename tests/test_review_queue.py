@@ -5,7 +5,7 @@ import jwt
 from app.core import database
 from app.core.config import settings
 from app.models.idea_lab import FeasibilityReport
-from app.services.review_queue import insert_review_job_event
+from app.services.review_queue import get_job_status, insert_review_job_event
 
 
 def _configure_internal_auth() -> None:
@@ -121,3 +121,52 @@ def test_review_jobs_lists_previous_runs_with_state_and_output(client):
     assert completed["status"] == "completed"
     assert completed["report"] == {"summary": "Stored report output"}
     assert queued["status"] == "queued"
+
+
+def test_progress_events_keep_job_status_started(client):
+    _configure_internal_auth()
+
+    async def insert_progress_events() -> dict:
+        async with database.AsyncSessionLocal() as session:
+            await insert_review_job_event(
+                session,
+                job_id="job-progress",
+                conversation_id="conv-queue",
+                github_url="https://github.com/example/project",
+                event_type="queued",
+            )
+            await insert_review_job_event(
+                session,
+                job_id="job-progress",
+                conversation_id="conv-queue",
+                github_url="https://github.com/example/project",
+                event_type="started",
+            )
+            await insert_review_job_event(
+                session,
+                job_id="job-progress",
+                conversation_id="conv-queue",
+                github_url="https://github.com/example/project",
+                event_type="graph_extract_started",
+                payload={"message": "Running Graphify extraction."},
+            )
+            await insert_review_job_event(
+                session,
+                job_id="job-progress",
+                conversation_id="conv-queue",
+                github_url="https://github.com/example/project",
+                event_type="graph_summary_ready",
+                payload={"summary_counts": {"files": 2}},
+            )
+            return await get_job_status(session, "job-progress")
+
+    status = asyncio.run(insert_progress_events())
+
+    assert status["status"] == "started"
+    assert status["updated_at"] == status["events"][-1]["created_at"]
+    assert [event["event_type"] for event in status["events"]] == [
+        "queued",
+        "started",
+        "graph_extract_started",
+        "graph_summary_ready",
+    ]

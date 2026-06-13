@@ -75,7 +75,29 @@ class ReviewQueueWorker:
             )
 
             try:
+                await insert_review_job_event(
+                    session,
+                    job_id=queued_event.job_id,
+                    conversation_id=queued_event.conversation_id,
+                    github_url=queued_event.github_url,
+                    event_type="idea_lab_loading",
+                    payload={
+                        "message": "Loading the selected Idea Lab report.",
+                        "conversation_id": queued_event.conversation_id,
+                    },
+                )
                 idea_lab_report = await get_idea_lab_report(session, queued_event.conversation_id)
+                await insert_review_job_event(
+                    session,
+                    job_id=queued_event.job_id,
+                    conversation_id=queued_event.conversation_id,
+                    github_url=queued_event.github_url,
+                    event_type="idea_lab_loaded",
+                    payload={
+                        "message": "Idea Lab report loaded and ready for comparison.",
+                        "conversation_id": idea_lab_report.conversation_id,
+                    },
+                )
                 report = await run_review_pipeline(
                     queued_event.github_url,
                     idea_lab_report,

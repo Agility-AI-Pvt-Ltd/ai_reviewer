@@ -42,6 +42,23 @@ Code clusters:
 {communities}
 </code_structure>
 
+Response depth:
+- Give enough detail for the student to understand what was observed, why it matters, and what to do next.
+- Prefer 3-5 specific items in strengths, weaknesses, implemented_features, missing_features, gaps, and improvements when the graph summary supports them.
+- Write each feature, gap, and improvement as a complete, specific sentence, not a short label.
+- For every gap and improvement, mention the likely impact on the product or user experience.
+- If evidence is limited, still explain what can be concluded and what remains uncertain.
+- Keep the response JSON valid, but do not make the text terse.
+
+Severity and priority calibration:
+- For gaps, use "critical" only when a core promised workflow appears missing or blocked.
+- Use "major" when the project can work but an important feature, architecture boundary, or safety requirement is incomplete.
+- Use "minor" only for polish, clarity, small organization issues, or low-risk missing details.
+- For improvements, use "high" for the next change that most improves product usefulness or alignment.
+- Use "medium" for important follow-up work after the highest-impact fixes.
+- Use "low" for polish or optional enhancements.
+- Keep gap "area" and improvement "title" short and title-like, without repeating severity or priority words.
+
 Return ONLY valid JSON. No explanation. No markdown. No backticks.
 
 {{
@@ -54,31 +71,31 @@ Return ONLY valid JSON. No explanation. No markdown. No backticks.
   }},
   "architecture": {{
     "pattern": "<MVC | Layered | Monolithic | REST API | Component-based | Event-driven | Mixed>",
-    "description": "<2-3 sentences>",
-    "strengths": ["..."],
-    "weaknesses": ["..."]
+    "description": "<3-5 sentences explaining the apparent architecture, the main modules involved, and confidence level>",
+    "strengths": ["<specific strength with evidence from files/functions/classes>", "..."],
+    "weaknesses": ["<specific weakness, why it matters, and what evidence suggests it>", "..."]
   }},
   "alignment": {{
     "alignment_percentage": <0-100>,
-    "implemented_features": ["..."],
-    "missing_features": ["..."],
-    "extra_features": ["..."]
+    "implemented_features": ["<complete sentence naming the feature and the graph evidence that supports it>", "..."],
+    "missing_features": ["<complete sentence naming the planned feature that appears absent or incomplete and why>", "..."],
+    "extra_features": ["<complete sentence naming extra implementation found beyond the Idea Lab plan, or [] if none>", "..."]
   }},
   "gaps": [
     {{
-      "area": "<area>",
-      "description": "<what is missing or wrong>",
+      "area": "<short title-case area, without severity text>",
+      "description": "<2-3 sentences explaining what is missing or wrong, the evidence, and the likely impact>",
       "severity": "<critical | major | minor>"
     }}
   ],
   "improvements": [
     {{
-      "title": "<title>",
-      "description": "<actionable suggestion>",
+      "title": "<short title-case action, without priority text>",
+      "description": "<2-3 sentences with an actionable next step, expected benefit, and where in the project it likely applies>",
       "priority": "<high | medium | low>"
     }}
   ],
-  "summary": "<3-4 sentence overall assessment for the student>"
+  "summary": "<8-10 sentence overall assessment for the student, including what works, what is missing, confidence limits, and the best next step>"
 }}
 """
 
@@ -95,6 +112,7 @@ def _json_from_text(text: str) -> dict[str, Any]:
         clean = re.sub(r"^```(?:json)?\s*", "", clean)
         clean = re.sub(r"\s*```$", "", clean)
     return json.loads(clean)
+
 
 def _format_list(values: list[str], empty: str) -> str:
     if not values:

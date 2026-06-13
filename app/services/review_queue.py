@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.review_job import ReviewJobEvent
 
 TERMINAL_EVENTS = {"completed", "failed"}
-ACTIVE_EVENTS = {"started", "completed", "failed"}
+STATUS_EVENTS = {"queued", "started", "completed", "failed"}
 
 
 def is_missing_queue_table_error(exc: Exception) -> bool:
@@ -88,6 +88,11 @@ def summarize_job_events(events: list[ReviewJobEvent]) -> dict[str, Any]:
 
     latest = events[-1]
     queued = events[0]
+    status = "queued"
+    for event in events:
+        if event.event_type in STATUS_EVENTS:
+            status = event.event_type
+
     completed_events = [event for event in events if event.event_type == "completed"]
     report = None
     if completed_events:
@@ -98,7 +103,7 @@ def summarize_job_events(events: list[ReviewJobEvent]) -> dict[str, Any]:
         "job_id": latest.job_id,
         "conversation_id": latest.conversation_id,
         "github_url": latest.github_url,
-        "status": latest.event_type,
+        "status": status,
         "error": latest.error,
         "report": report,
         "queued_at": queued.created_at,
