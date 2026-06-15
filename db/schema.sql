@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS review_state_snapshots (
     project_path TEXT,
     state JSON NOT NULL DEFAULT '{}',
     idea_lab_report JSON,
+    graphify_graph_json JSON,
     graph JSON,
     graph_summary JSON,
     review_report JSON,

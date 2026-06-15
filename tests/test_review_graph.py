@@ -64,5 +64,6 @@ async def test_langgraph_review_pipeline_persists_node_stages(monkeypatch, clien
 
     assert report.summary == "The project is well aligned with the idea and needs more coverage."
     assert [snapshot.stage for snapshot in snapshots] == ["requested", "graph_extracted", "evaluated"]
+    assert snapshots[1].graphify_graph_json["nodes"][0]["name"] == "review_project"
     assert snapshots[1].graph_summary["functions"] == ["review_project"]
     assert snapshots[2].review_report["scores"]["overall"] == 8.0

@@ -10,6 +10,7 @@ from app.services.review_queue import (
     insert_review_job_event,
     is_missing_queue_table_error,
 )
+from app.utils.file_handler import cleanup_cloned_repository
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +126,21 @@ class ReviewQueueWorker:
                 event_type="completed",
                 payload={"report": report.model_dump(mode="json")},
             )
+            try:
+                deleted = cleanup_cloned_repository(
+                    queued_event.github_url,
+                    settings.projects_dir,
+                )
+                logger.info(
+                    "review_worker.cleanup_completed job_id=%s deleted=%s",
+                    queued_event.job_id,
+                    deleted,
+                )
+            except Exception:
+                logger.exception(
+                    "review_worker.cleanup_failed job_id=%s",
+                    queued_event.job_id,
+                )
             logger.info("review_worker.job_completed job_id=%s", queued_event.job_id)
             return True
 
