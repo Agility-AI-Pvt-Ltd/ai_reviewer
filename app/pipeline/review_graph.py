@@ -207,6 +207,7 @@ async def extract_graph_node(state: ReviewState) -> ReviewState:
             "graph_summary": graph_summary,
         },
         idea_lab_report=state["idea_lab_report"],
+        graphify_graph_json=graph,
         graph=graph,
         graph_summary=graph_summary,
     )
@@ -272,6 +273,7 @@ async def evaluate_node(state: ReviewState) -> ReviewState:
             "report": report.model_dump(mode="json"),
         },
         idea_lab_report=state["idea_lab_report"],
+        graphify_graph_json=state.get("graph"),
         graph=state.get("graph"),
         graph_summary=state["graph_summary"],
         review_report=report,

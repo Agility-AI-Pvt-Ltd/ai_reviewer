@@ -108,6 +108,7 @@ class ReviewStateSnapshotOut(BaseModel):
     project_path: str | None = None
     state: dict
     idea_lab_report: dict | None = None
+    graphify_graph_json: dict | None = None
     graph: dict | None = None
     graph_summary: dict | None = None
     review_report: dict | None = None

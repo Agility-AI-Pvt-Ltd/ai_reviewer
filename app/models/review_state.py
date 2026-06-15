@@ -23,6 +23,7 @@ class ReviewStateSnapshot(Base):
     project_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     state: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     idea_lab_report: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    graphify_graph_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     graph: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     graph_summary: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     review_report: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
