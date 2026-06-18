@@ -23,8 +23,8 @@ class Architecture(BaseModel):
         "Mixed",
     ]
     description: str
-    strengths: list[str]
-    weaknesses: list[str]
+    strengths: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
 
 
 class Alignment(BaseModel):
