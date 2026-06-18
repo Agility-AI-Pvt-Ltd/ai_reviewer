@@ -5,6 +5,7 @@ from sqlalchemy import DateTime, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.time import get_ist_now
 
 
 class FeasibilityReport(Base):
@@ -24,4 +25,4 @@ class FeasibilityReport(Base):
     score: Mapped[str | None] = mapped_column(String, nullable=True)
     targeting: Mapped[str | None] = mapped_column(Text, nullable=True)
     next_step: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=get_ist_now)

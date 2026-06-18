@@ -5,6 +5,7 @@ from sqlalchemy import DateTime, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.time import get_ist_now
 
 
 class ReviewStateSnapshot(Base):
@@ -28,4 +29,4 @@ class ReviewStateSnapshot(Base):
     graph_summary: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     review_report: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow, nullable=False)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=get_ist_now, nullable=False)
