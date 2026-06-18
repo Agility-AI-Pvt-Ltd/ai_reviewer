@@ -7,6 +7,7 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.review_job import ReviewJobEvent
+from app.core.time import get_ist_now
 
 TERMINAL_EVENTS = {"completed", "failed"}
 STATUS_EVENTS = {"queued", "started", "completed", "failed"}
@@ -168,7 +169,7 @@ async def find_next_queued_job(session: AsyncSession, *, stale_after_seconds: in
         .limit(50)
     )
     queued_events = list(result.scalars().all())
-    stale_before = dt.datetime.utcnow() - dt.timedelta(seconds=stale_after_seconds)
+    stale_before = get_ist_now() - dt.timedelta(seconds=stale_after_seconds)
 
     for queued_event in queued_events:
         events = await list_review_job_events(session, queued_event.job_id)

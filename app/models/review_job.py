@@ -5,6 +5,7 @@ from sqlalchemy import DateTime, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.time import get_ist_now
 
 ReviewJobEventType = Literal[
     "queued",
@@ -39,4 +40,4 @@ class ReviewJobEvent(Base):
     event_type: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow, nullable=False)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=get_ist_now, nullable=False)
