@@ -51,6 +51,7 @@ Response depth:
 - Keep the response JSON valid, but do not make the text terse.
 
 Severity and priority calibration:
+- If the GitHub project appears unrelated to the Idea Lab plan, it is valid to assign 0 for scores.alignment_with_idea and 0 for alignment.alignment_percentage. Do not give partial alignment credit just because the code is functional.
 - For gaps, use "critical" only when a core promised workflow appears missing or blocked.
 - Use "major" when the project can work but an important feature, architecture boundary, or safety requirement is incomplete.
 - Use "minor" only for polish, clarity, small organization issues, or low-risk missing details.

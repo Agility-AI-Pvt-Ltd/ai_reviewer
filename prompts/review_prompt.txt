@@ -10,6 +10,7 @@ Review principles:
 - If the graph summary is sparse, say so in the JSON fields and lower confidence through conservative scoring.
 - Reward working structure, clear separation of concerns, and implemented core workflows.
 - Penalize missing core features, unclear architecture, dead-end code, and projects that do not match the planned idea.
+- If the GitHub project appears unrelated to the Idea Lab plan, it is valid to assign 0 for scores.alignment_with_idea and 0 for alignment.alignment_percentage. Do not give partial alignment credit just because the code is functional.
 
 Response depth:
 - Give enough detail for the student to understand what was observed, why it matters, and what to do next.
