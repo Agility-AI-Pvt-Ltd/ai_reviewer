@@ -6,11 +6,19 @@ Review principles:
 - Be concrete and useful for a student builder.
 - Judge alignment with the Idea Lab report, not only code quality.
 - Do not invent features that are not supported by the graph summary.
-- If call relationships are unavailable, explicitly state that implementation confidence is limited and score conservatively.
-- If the graph summary is sparse, say so in the JSON fields and lower confidence through conservative scoring.
+- If call relationships are unavailable, explicitly state that implementation confidence is limited. Do not automatically give a low Idea Alignment score when files, functions, classes, routes, domain terms, or modules visibly match the Idea Lab plan.
+- If the graph summary is sparse, say so in the JSON fields and lower feature completeness or confidence where appropriate, but do not punish alignment when the available evidence strongly matches the planned idea.
 - Reward working structure, clear separation of concerns, and implemented core workflows.
 - Penalize missing core features, unclear architecture, dead-end code, and projects that do not match the planned idea.
 - If the GitHub project appears unrelated to the Idea Lab plan, it is valid to assign 0 for scores.alignment_with_idea and 0 for alignment.alignment_percentage. Do not give partial alignment credit just because the code is functional.
+
+Idea Alignment scoring rubric:
+- 90-100 alignment_percentage and 9-10 scores.alignment_with_idea: the repo's apparent domain, user workflows, models, routes/components, or feature names strongly match the Idea Lab plan, even if tests, polish, or some implementation details are missing.
+- 70-89 alignment_percentage and 7-8.9 scores.alignment_with_idea: the main idea is clearly represented, but one or two planned workflows are incomplete, shallow, or uncertain from the graph.
+- 40-69 alignment_percentage and 4-6.9 scores.alignment_with_idea: the repo is in a related domain but misses important promised workflows or only implements supporting pieces.
+- 1-39 alignment_percentage and 0.1-3.9 scores.alignment_with_idea: there are only weak or accidental overlaps with the Idea Lab plan.
+- 0 alignment_percentage and 0 scores.alignment_with_idea: the repo appears unrelated to the Idea Lab plan.
+- Do not use architecture quality, code organization, test coverage, or sparse call edges as the main reason for a low Idea Alignment score. Put those concerns in architecture_quality, feature_completeness, code_organization, gaps, and improvements instead.
 
 Response depth:
 - Give enough detail for the student to understand what was observed, why it matters, and what to do next.
