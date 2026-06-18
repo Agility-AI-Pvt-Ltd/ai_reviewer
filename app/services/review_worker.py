@@ -4,7 +4,11 @@ import logging
 from app.core import database
 from app.core.config import settings
 from app.pipeline.review_graph import run_review_pipeline
-from app.services.github_oauth import get_github_access_token
+from app.services.github_oauth import (
+    find_latest_github_credential,
+    get_github_access_token,
+    github_repository_accessible,
+)
 from app.services.idea_lab import get_idea_lab_report
 from app.services.review_queue import (
     find_next_queued_job,
@@ -108,6 +112,15 @@ class ReviewQueueWorker:
                         session,
                         int(github_credential_id),
                     )
+                elif queued_payload.get("auth_identity"):
+                    credential = await find_latest_github_credential(
+                        session,
+                        auth_identity=str(queued_payload["auth_identity"]),
+                    )
+                    if credential is not None:
+                        token = await get_github_access_token(session, credential.id)
+                        if await github_repository_accessible(queued_event.github_url, token):
+                            github_access_token = token
 
                 pipeline_kwargs = {"job_id": queued_event.job_id}
                 if github_access_token:
