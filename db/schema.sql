@@ -44,6 +44,50 @@ CREATE INDEX IF NOT EXISTS ix_review_job_events_conversation_id
 CREATE INDEX IF NOT EXISTS ix_review_job_events_event_type
     ON review_job_events (event_type);
 
+CREATE TABLE IF NOT EXISTS github_oauth_states (
+    id SERIAL PRIMARY KEY,
+    state VARCHAR(128) UNIQUE NOT NULL,
+    auth_identity VARCHAR(255) NOT NULL,
+    conversation_id VARCHAR NOT NULL,
+    github_url TEXT NOT NULL,
+    repo_owner VARCHAR(255) NOT NULL,
+    repo_name VARCHAR(255) NOT NULL,
+    requested_scope VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    consumed_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_github_oauth_states_id
+    ON github_oauth_states (id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ix_github_oauth_states_state
+    ON github_oauth_states (state);
+
+CREATE INDEX IF NOT EXISTS ix_github_oauth_states_auth_identity
+    ON github_oauth_states (auth_identity);
+
+CREATE TABLE IF NOT EXISTS github_credentials (
+    id SERIAL PRIMARY KEY,
+    auth_identity VARCHAR(255) NOT NULL,
+    github_login VARCHAR(255),
+    encrypted_access_token TEXT NOT NULL,
+    token_type VARCHAR(32) NOT NULL DEFAULT 'bearer',
+    scope VARCHAR(255),
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_github_credentials_id
+    ON github_credentials (id);
+
+CREATE INDEX IF NOT EXISTS ix_github_credentials_auth_identity
+    ON github_credentials (auth_identity);
+
+CREATE INDEX IF NOT EXISTS ix_github_credentials_github_login
+    ON github_credentials (github_login);
+
 CREATE TABLE IF NOT EXISTS review_state_snapshots (
     id SERIAL PRIMARY KEY,
     conversation_id VARCHAR NOT NULL,

@@ -1,11 +1,13 @@
+import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
 
-def github_slug(github_url: str) -> str:
+def parse_github_repo_url(github_url: str) -> tuple[str, str]:
     parsed = urlparse(github_url)
     if parsed.netloc not in {"github.com", "www.github.com"}:
         raise ValueError("Only github.com repository URLs are supported")
@@ -14,23 +16,54 @@ def github_slug(github_url: str) -> str:
     if len(parts) < 2:
         raise ValueError("GitHub URL must include owner and repository")
 
-    owner = re.sub(r"[^A-Za-z0-9_.-]+", "-", parts[0])
-    repo = re.sub(r"[^A-Za-z0-9_.-]+", "-", parts[1].removesuffix(".git"))
+    return parts[0], parts[1].removesuffix(".git")
+
+
+def github_slug(github_url: str) -> str:
+    owner_part, repo_part = parse_github_repo_url(github_url)
+    owner = re.sub(r"[^A-Za-z0-9_.-]+", "-", owner_part)
+    repo = re.sub(r"[^A-Za-z0-9_.-]+", "-", repo_part)
     return f"{owner}-{repo}"
 
 
-def clone_or_update_repository(github_url: str, projects_dir: str) -> Path:
+def _run_git(args: list[str], access_token: str | None = None) -> None:
+    if access_token:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            askpass = Path(temp_dir) / "git-askpass.sh"
+            askpass.write_text(
+                "#!/bin/sh\n"
+                "case \"$1\" in\n"
+                "*Username*) printf '%s\\n' x-access-token ;;\n"
+                "*Password*) printf '%s\\n' \"$GITHUB_TOKEN\" ;;\n"
+                "*) printf '\\n' ;;\n"
+                "esac\n",
+                encoding="utf-8",
+            )
+            askpass.chmod(0o700)
+            env = os.environ.copy()
+            env["GIT_ASKPASS"] = str(askpass)
+            env["GITHUB_TOKEN"] = access_token
+            env["GIT_TERMINAL_PROMPT"] = "0"
+            subprocess.run(args, check=True, capture_output=True, text=True, env=env)
+            return
+
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    subprocess.run(args, check=True, capture_output=True, text=True, env=env)
+
+
+def clone_or_update_repository(github_url: str, projects_dir: str, access_token: str | None = None) -> Path:
     target = Path(projects_dir).expanduser().resolve() / github_slug(github_url)
     target.parent.mkdir(parents=True, exist_ok=True)
 
     if (target / ".git").exists():
-        subprocess.run(["git", "-C", str(target), "pull", "--ff-only"], check=True, capture_output=True, text=True)
+        _run_git(["git", "-C", str(target), "pull", "--ff-only"], access_token=access_token)
         return target
 
     if target.exists() and any(target.iterdir()):
         return target
 
-    subprocess.run(["git", "clone", "--depth", "1", github_url, str(target)], check=True, capture_output=True, text=True)
+    _run_git(["git", "clone", "--depth", "1", github_url, str(target)], access_token=access_token)
     return target
 
 
