@@ -103,8 +103,8 @@ def run_graphify(project_path: str | Path) -> dict[str, Any]:
     tags=["graphify", "github"],
     process_outputs=_trace_github_output,
 )
-def run_graphify_for_github(github_url: str) -> tuple[Path, dict[str, Any]]:
-    project_path = clone_or_update_repository(github_url, settings.projects_dir)
+def run_graphify_for_github(github_url: str, access_token: str | None = None) -> tuple[Path, dict[str, Any]]:
+    project_path = clone_or_update_repository(github_url, settings.projects_dir, access_token=access_token)
     add_trace_metadata({"github_url": github_url, "project_path": str(project_path)})
     return project_path, run_graphify(project_path)
 

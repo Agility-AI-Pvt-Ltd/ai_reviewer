@@ -91,11 +91,24 @@ class ReviewJobListResponse(BaseModel):
 
 
 class ReviewJobQueuedResponse(BaseModel):
+    requires_auth: Literal[False] = False
     job_id: str
     conversation_id: str
     github_url: HttpUrl
     status: str = "queued"
     status_url: str
+
+
+class ReviewAuthRequiredResponse(BaseModel):
+    requires_auth: Literal[True] = True
+    conversation_id: str
+    github_url: HttpUrl
+    status: str = "requires_auth"
+    oauth_url: str
+    state: str
+
+
+ReviewStartResponse = ReviewJobQueuedResponse | ReviewAuthRequiredResponse
 
 
 class ReviewStateSnapshotOut(BaseModel):

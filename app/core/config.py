@@ -92,6 +92,15 @@ class Settings(BaseSettings):
     review_worker_poll_seconds: float = Field(default=3.0, alias="REVIEW_WORKER_POLL_SECONDS")
     review_worker_stale_seconds: int = Field(default=1800, alias="REVIEW_WORKER_STALE_SECONDS")
 
+    github_oauth_enabled: bool = Field(default=False, alias="GITHUB_OAUTH_ENABLED")
+    github_client_id: str | None = Field(default=None, alias="GITHUB_CLIENT_ID")
+    github_client_secret: str | None = Field(default=None, alias="GITHUB_CLIENT_SECRET")
+    github_oauth_callback_url: str | None = Field(default=None, alias="GITHUB_OAUTH_CALLBACK_URL")
+    github_oauth_scope: str = Field(default="repo", alias="GITHUB_OAUTH_SCOPE")
+    github_oauth_state_ttl_seconds: int = Field(default=900, alias="GITHUB_OAUTH_STATE_TTL_SECONDS")
+    github_api_timeout_seconds: float = Field(default=10.0, alias="GITHUB_API_TIMEOUT_SECONDS")
+    github_token_encryption_key: str | None = Field(default=None, alias="GITHUB_TOKEN_ENCRYPTION_KEY")
+
     @field_validator("database_url")
     @classmethod
     def normalize_database_url(cls, value: str) -> str:

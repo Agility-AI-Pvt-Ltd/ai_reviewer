@@ -50,6 +50,38 @@ REVIEW_WORKER_POLL_SECONDS=3
 REVIEW_WORKER_STALE_SECONDS=1800
 ```
 
+## Private GitHub Repositories
+
+Private repo support is available through GitHub OAuth. Enable it only in
+environments where the GitHub OAuth app is configured:
+
+```env
+GITHUB_OAUTH_ENABLED=true
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+GITHUB_OAUTH_CALLBACK_URL=https://api.futurex.ai/auth/github/callback
+GITHUB_OAUTH_SCOPE=repo
+GITHUB_TOKEN_ENCRYPTION_KEY=use-a-long-random-secret
+```
+
+Use `POST /review` or `POST /review/start` with the existing review payload. If
+the repository is public or already authorized, the API returns the normal
+queued-job response. If GitHub access is denied, the API returns:
+
+```json
+{
+  "requires_auth": true,
+  "status": "requires_auth",
+  "oauth_url": "https://github.com/login/oauth/authorize?...",
+  "state": "..."
+}
+```
+
+After the user approves access, GitHub redirects to
+`GET /auth/github/callback?code=...&state=...`. The callback exchanges the code,
+stores the encrypted token server-side, verifies repo access, queues the review,
+and returns the same queued-job response shape as `POST /review`.
+
 If you see an error like `relation "review_job_events" does not exist`, the app
 tables have not been created in Postgres yet. Run the schema once with a
 migration/admin DB role:

@@ -18,6 +18,7 @@ def client(tmp_path):
     db_url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
     database.configure_database(db_url)
     settings.review_worker_enabled = False
+    settings.github_oauth_enabled = False
     asyncio.run(database.init_db(create_idea_lab_tables=True))
 
     with TestClient(app) as test_client:

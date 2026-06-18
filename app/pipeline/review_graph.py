@@ -19,6 +19,7 @@ class ReviewState(TypedDict, total=False):
     conversation_id: str
     idea_lab_report: IdeaLabReport
     session: AsyncSession
+    github_access_token: str | None
     project_path: str
     graph: dict[str, Any]
     graph_summary: dict
@@ -158,7 +159,15 @@ async def extract_graph_node(state: ReviewState) -> ReviewState:
             "github_url": state["github_url"],
         },
     )
-    project_path, graph = await asyncio.to_thread(run_graphify_for_github, state["github_url"])
+    github_access_token = state.get("github_access_token")
+    if github_access_token:
+        project_path, graph = await asyncio.to_thread(
+            run_graphify_for_github,
+            state["github_url"],
+            github_access_token,
+        )
+    else:
+        project_path, graph = await asyncio.to_thread(run_graphify_for_github, state["github_url"])
     await _emit_job_event(
         state,
         "graph_extract_completed",
@@ -314,6 +323,7 @@ async def run_review_pipeline(
     idea_lab_report: IdeaLabReport,
     session: AsyncSession,
     job_id: str | None = None,
+    github_access_token: str | None = None,
 ) -> ProjectReviewReport:
     conversation_id = idea_lab_report.conversation_id
     add_trace_metadata(
@@ -332,6 +342,7 @@ async def run_review_pipeline(
                 "conversation_id": conversation_id,
                 "idea_lab_report": idea_lab_report,
                 "session": session,
+                "github_access_token": github_access_token,
             }
         )
         return final_state["report"]

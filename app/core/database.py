@@ -49,6 +49,7 @@ async def get_idea_lab_session() -> AsyncIterator[AsyncSession]:
 
 
 async def init_db(create_idea_lab_tables: bool = False) -> None:
+    from app.models.github_auth import GithubCredential, GithubOAuthState
     from app.models.idea_lab import FeasibilityReport
     from app.models.review_job import ReviewJobEvent
     from app.models.review_state import ReviewStateSnapshot
@@ -59,6 +60,8 @@ async def init_db(create_idea_lab_tables: bool = False) -> None:
                 Base.metadata.create_all,
                 tables=[
                     FeasibilityReport.__table__,
+                    GithubOAuthState.__table__,
+                    GithubCredential.__table__,
                     ReviewJobEvent.__table__,
                     ReviewStateSnapshot.__table__,
                 ],

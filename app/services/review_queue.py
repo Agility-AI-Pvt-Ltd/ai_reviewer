@@ -50,15 +50,22 @@ async def enqueue_review_job(
     *,
     conversation_id: str,
     github_url: str,
+    github_credential_id: int | None = None,
+    auth_identity: str | None = None,
 ) -> ReviewJobEvent:
     job_id = str(uuid.uuid4())
+    payload: dict[str, Any] = {"conversation_id": conversation_id, "github_url": github_url}
+    if github_credential_id is not None:
+        payload["github_credential_id"] = github_credential_id
+    if auth_identity is not None:
+        payload["auth_identity"] = auth_identity
     return await insert_review_job_event(
         session,
         job_id=job_id,
         conversation_id=conversation_id,
         github_url=github_url,
         event_type="queued",
-        payload={"conversation_id": conversation_id, "github_url": github_url},
+        payload=payload,
     )
 
 
