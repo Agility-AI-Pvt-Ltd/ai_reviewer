@@ -112,3 +112,8 @@ CREATE INDEX IF NOT EXISTS ix_review_state_snapshots_conversation_id
 
 CREATE INDEX IF NOT EXISTS ix_review_state_snapshots_stage
     ON review_state_snapshots (stage);
+
+
+
+ALTER TABLE review_state_snapshots
+ADD COLUMN IF NOT EXISTS graphify_graph_json JSON;
